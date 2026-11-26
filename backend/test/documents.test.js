@@ -115,6 +115,21 @@ test('GET /documents/:id/download responde 404 para id inexistente', async () =>
   assert.equal(body.error.code, 'DOCUMENT_NOT_FOUND');
 });
 
+test('upload, listagem e download preservam o mesmo documento', async () => {
+  const uploadResponse = await uploadFile('fluxo-completo.txt', 'dms');
+  const uploaded = await uploadResponse.json();
+  const listResponse = await fetch(`${baseUrl}/documents`);
+  const documents = await listResponse.json();
+  const listedDocument = documents.find((document) => document.id === uploaded.id);
+  const downloadResponse = await fetch(`${baseUrl}/documents/${uploaded.id}/download`);
+
+  assert.equal(uploadResponse.status, 201);
+  assert.equal(listResponse.status, 200);
+  assert.equal(listedDocument.originalName, 'fluxo-completo.txt');
+  assert.equal(downloadResponse.status, 200);
+  assert.equal(await downloadResponse.text(), 'dms');
+});
+
 test('o repositório rejeita nomes físicos que poderiam escapar do storage', () => {
   const repository = createFileStorageRepository(storageDir);
 
